@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from 'react';
-import { MessageSquare, Settings, Trash2, LogOut, Sparkles, User, HelpCircle } from "lucide-react";
+import { MessageSquare, Settings, Trash2, User, Sparkles, Plus } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,7 +29,6 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
 
   useEffect(() => {
     setSessions(getSessions());
-    // Polling or listening for session changes could be added here
   }, [activeSessionId]);
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -139,5 +138,3 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
     </Sidebar>
   );
 }
-
-import { Plus } from "lucide-react";

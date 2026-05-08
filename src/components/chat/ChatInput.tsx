@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Plus, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -80,5 +81,3 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
     </div>
   );
 }
-
-import { cn } from "@/lib/utils";

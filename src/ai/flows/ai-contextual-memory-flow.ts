@@ -66,6 +66,7 @@ const aiContextualMemoryFlow = ai.defineFlow(
   },
   async (input) => {
     // Pre-format the history to avoid logic in the Handlebars template
+    // This fixes the 'unknown helper eq' error by performing role logic in TS.
     const formattedHistory = input.history.map((h) => 
       `${h.role === 'user' ? 'User' : 'Bharatmaan AI'}: ${h.content}`
     );
