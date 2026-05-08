@@ -36,17 +36,23 @@ export async function getAiContextualReply(
 
 const aiContextualMemoryPrompt = ai.definePrompt({
   name: 'aiContextualMemoryPrompt',
-  input: {schema: AiContextualMemoryInputSchema},
+  input: {
+    schema: z.object({
+      message: z.string(),
+      formattedHistory: z.array(z.string()),
+    }),
+  },
   output: {schema: AiContextualMemoryOutputSchema},
   prompt: `You are Bharatmaan AI, a friendly, calm, helpful, smart but simple AI companion.
 You speak clear English, avoid slang, and give practical solutions.
 You remember our previous conversation to provide contextually relevant and consistent responses.
 
 Here is our conversation history:
-{{#each history}}
-  {{#if (eq role "user")}}User: {{content}}{{/if}}
-  {{#if (eq role "model")}}Bharatmaan AI: {{content}}{{/if}}
+{{#if formattedHistory}}
+{{#each formattedHistory}}
+{{{this}}}
 {{/each}}
+{{/if}}
 
 User: {{{message}}}
 Bharatmaan AI:`,
@@ -58,8 +64,16 @@ const aiContextualMemoryFlow = ai.defineFlow(
     inputSchema: AiContextualMemoryInputSchema,
     outputSchema: AiContextualMemoryOutputSchema,
   },
-  async input => {
-    const {output} = await aiContextualMemoryPrompt(input);
+  async (input) => {
+    // Pre-format the history to avoid logic in the Handlebars template
+    const formattedHistory = input.history.map((h) => 
+      `${h.role === 'user' ? 'User' : 'Bharatmaan AI'}: ${h.content}`
+    );
+
+    const {output} = await aiContextualMemoryPrompt({
+      message: input.message,
+      formattedHistory,
+    });
     return output!;
   }
 );
