@@ -10,6 +10,7 @@ export const FirebaseClientProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  // Initialize Firebase only on the client
   const { firebaseApp, firestore, auth } = useMemo(() => initializeFirebase(), []);
 
   return (

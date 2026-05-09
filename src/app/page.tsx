@@ -1,15 +1,14 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, doc, setDoc, query, orderBy, limit, addDoc, serverTimestamp, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, query, orderBy, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { getAiContextualReply } from "@/ai/flows/ai-contextual-memory-flow";
 import { adaptPersona } from "@/ai/flows/ai-adaptive-persona-flow";
-import { Settings2, Trash2, Loader2 } from "lucide-react";
+import { Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "@/components/chat/MessageBubble";
@@ -63,8 +62,8 @@ export default function BharatmaanChat() {
   }, [user]);
 
   // Fetch Messages for active session
-  const messagesQuery = activeSessionId && user ? query(
-    collection(db!, 'users', user.uid, 'sessions', activeSessionId, 'messages'),
+  const messagesQuery = activeSessionId && user && db ? query(
+    collection(db, 'users', user.uid, 'sessions', activeSessionId, 'messages'),
     orderBy('timestamp', 'asc')
   ) : null;
   
