@@ -1,0 +1,57 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Extended information about the user.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "ChatSession": {
+      "title": "Chat Session",
+      "description": "A container for a conversation between the user and Bharatmaan AI.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "title", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A single message within a chat session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "content": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "persona": { "type": "string" }
+      },
+      "required": ["id", "role", "content", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile data."
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": "ChatSession",
+      "description": "List of chat sessions for a user."
+    },
+    "/users/{userId}/sessions/{sessionId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Individual messages within a session."
+    }
+  }
+}

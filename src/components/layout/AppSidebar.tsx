@@ -1,7 +1,8 @@
+
 "use client"
 
-import React, { useEffect, useState } from 'react';
-import { MessageSquare, Settings, Trash2, User, Plus } from "lucide-react";
+import React from 'react';
+import { MessageSquare, Settings, Trash2, User, Plus, LogOut } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,10 +16,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { ChatSession, getSessions, deleteSession, createSession, clearAllSessions } from "@/lib/chat-store";
+import { useUser, useFirestore, useCollection, useAuth } from '@/firebase';
+import { collection, query, orderBy, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { BharatmaanLogo } from "@/components/brand/logo";
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 interface AppSidebarProps {
   activeSessionId: string | null;
@@ -26,27 +30,42 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps) {
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const { user } = useUser();
+  const db = useFirestore();
+  const auth = useAuth();
+  const router = useRouter();
 
-  useEffect(() => {
-    setSessions(getSessions());
-  }, [activeSessionId]);
+  const sessionsQuery = user && db ? query(
+    collection(db, 'users', user.uid, 'sessions'),
+    orderBy('updatedAt', 'desc')
+  ) : null;
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const { data: sessions = [] } = useCollection(sessionsQuery as any);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    deleteSession(id);
-    setSessions(getSessions());
+    if (!user || !db) return;
+    await deleteDoc(doc(db, 'users', user.uid, 'sessions', id));
+    if (activeSessionId === id) onSessionSelect('');
   };
 
-  const handleNewChat = () => {
-    const session = createSession();
-    setSessions(getSessions());
-    onSessionSelect(session.id);
+  const handleNewChat = async () => {
+    if (!user || !db) return;
+    const newSessionRef = doc(collection(db, 'users', user.uid, 'sessions'));
+    const sessionId = newSessionRef.id;
+    await setDoc(newSessionRef, {
+      id: sessionId,
+      title: 'New Conversation',
+      updatedAt: Date.now()
+    });
+    onSessionSelect(sessionId);
   };
 
-  const handleClear = () => {
-    clearAllSessions();
-    setSessions([]);
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/auth');
+    }
   };
 
   return (
@@ -79,7 +98,7 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
                   <p className="text-xs text-muted-foreground font-medium">Ready for a new start?</p>
                 </div>
               ) : (
-                sessions.map((session) => (
+                sessions.map((session: any) => (
                   <SidebarMenuItem key={session.id}>
                     <SidebarMenuButton 
                       isActive={activeSessionId === session.id}
@@ -109,7 +128,7 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
           <SidebarMenuItem>
             <SidebarMenuButton className="rounded-xl px-4 hover:bg-secondary/80 font-medium">
               <User className="w-4 h-4 mr-2" />
-              Your Profile
+              <span className="truncate">{user?.displayName || user?.email || 'User Profile'}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -120,11 +139,11 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton 
-              onClick={handleClear}
+              onClick={handleLogout}
               className="rounded-xl px-4 text-destructive/80 hover:bg-destructive/10 hover:text-destructive font-medium"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Wipe All History
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
