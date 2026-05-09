@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zkit';
+import { z } from 'genkit';
 
 const AiChatResponseInputSchema = z.object({
   message: z.string().describe('The current message from the user.'),
