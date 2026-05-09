@@ -6,13 +6,14 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Message, ChatSession, getSessions, saveSessions, createSession } from "@/lib/chat-store";
 import { getAiContextualReply } from "@/ai/flows/ai-contextual-memory-flow";
 import { adaptPersona } from "@/ai/flows/ai-adaptive-persona-flow";
-import { Sparkles, Settings2, Trash2 } from "lucide-react";
+import { Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { useToast } from "@/hooks/use-toast";
+import { BharatmaanLogo } from "@/components/brand/logo";
 
 export default function BharatmaanChat() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -26,17 +27,16 @@ export default function BharatmaanChat() {
 
   useEffect(() => {
     // 1. Wake up the private server immediately on app load
-    // This triggers Replit to start the Repl if it's sleeping
     fetch(PRIVATE_SERVER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: "Server Wakeup Call", task: "ping" }),
     }).catch(() => {
-      // Ignore errors for the initial wake-up call as the server might still be booting
+      // Ignore errors for the initial wake-up call
     });
 
     // 2. Splash screen timer
-    const timer = setTimeout(() => setIsSplash(false), 2000);
+    const timer = setTimeout(() => setIsSplash(false), 2500);
 
     // 3. Initialize chat sessions
     const initialSessions = getSessions();
@@ -83,13 +83,11 @@ export default function BharatmaanChat() {
     setIsTyping(true);
 
     try {
-      // 1. Adapt persona based on context
       const personaData = await adaptPersona({
         userMessage: content,
         chatHistory: currentSession.messages.slice(-5).map(m => m.content)
       });
 
-      // 2. Get contextual reply
       const aiReply = await getAiContextualReply({
         message: content,
         history: updatedMessages.map(m => ({
@@ -147,19 +145,19 @@ export default function BharatmaanChat() {
   if (isSplash) {
     return (
       <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50 animate-in fade-in duration-700">
-        <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/20 animate-bounce">
-          <Sparkles className="w-12 h-12 text-primary-foreground" />
+        <div className="w-32 h-32 rounded-[2.5rem] bg-card flex items-center justify-center shadow-2xl shadow-primary/10 border border-primary/20 animate-bounce">
+          <BharatmaanLogo size={80} />
         </div>
-        <h1 className="text-3xl font-bold mt-8 text-foreground">Bharatmaan AI</h1>
-        <div className="flex flex-col items-center gap-2 mt-2">
-          <p className="text-primary font-bold tracking-[0.3em] uppercase">Your AI Friend</p>
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground animate-pulse">
-            <span className="w-1 h-1 rounded-full bg-primary"></span>
-            Starting Private Server...
+        <h1 className="text-4xl font-bold mt-10 tracking-tight text-foreground">Bharatmaan AI</h1>
+        <div className="flex flex-col items-center gap-2 mt-3">
+          <p className="text-primary font-bold tracking-[0.4em] uppercase text-sm">Your AI. Your India.</p>
+          <div className="flex items-center gap-2 mt-8 text-[10px] text-muted-foreground animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+            Syncing Private AI Server...
           </div>
         </div>
-        <div className="absolute bottom-12 text-muted-foreground/50 text-xs font-medium uppercase tracking-widest">
-          Created by Krushna
+        <div className="absolute bottom-12 text-muted-foreground/40 text-[10px] font-bold uppercase tracking-[0.2em]">
+          Innovated by Krushna
         </div>
       </div>
     );
@@ -176,14 +174,14 @@ export default function BharatmaanChat() {
           <header className="h-16 flex items-center justify-between px-4 border-b border-border/50 bg-background/50 backdrop-blur-md sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="md:hidden" />
-              <div className="hidden md:flex w-8 h-8 rounded-xl bg-primary/10 items-center justify-center border border-primary/20">
-                <Sparkles className="w-4 h-4 text-primary" />
+              <div className="hidden md:flex items-center justify-center">
+                <BharatmaanLogo size={32} />
               </div>
               <div>
                 <h2 className="text-sm font-bold leading-none">{currentSession?.title || 'Bharatmaan AI'}</h2>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                  <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Server Connected</span>
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Server Ready</span>
                 </div>
               </div>
             </div>
@@ -202,19 +200,19 @@ export default function BharatmaanChat() {
             <div className="max-w-4xl mx-auto space-y-2">
               {currentSession?.messages.length === 0 && !isTyping && (
                 <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in slide-in-from-bottom-4">
-                  <div className="w-20 h-20 rounded-3xl bg-secondary/50 flex items-center justify-center mb-6">
-                    <Sparkles className="w-10 h-10 text-primary/50" />
+                  <div className="w-24 h-24 rounded-[2rem] bg-secondary/30 flex items-center justify-center mb-8 border border-border/50 shadow-inner">
+                    <BharatmaanLogo size={56} />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">Namaste! I'm Bharatmaan AI</h3>
-                  <p className="text-muted-foreground max-w-xs mx-auto text-sm">
-                    Your friendly AI companion created by Krushna. Connected to your private server.
+                  <h3 className="text-2xl font-bold mb-3 tracking-tight">Namaste! Bharatmaan here.</h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto text-sm leading-relaxed">
+                    I am your AI companion, built on your private server and created by Krushna. How can I help you today?
                   </p>
-                  <div className="grid grid-cols-2 gap-3 mt-10 w-full max-w-sm">
-                    {['Explain Quantum Physics', 'Emotional Support', 'Tell me a joke', 'Study help'].map(suggestion => (
+                  <div className="grid grid-cols-2 gap-3 mt-12 w-full max-w-sm">
+                    {['Latest India Tech News', 'Emotional Support', 'Traditional Recipes', 'Help me Study'].map(suggestion => (
                       <Button 
                         key={suggestion}
                         variant="outline" 
-                        className="rounded-xl h-auto py-3 text-xs bg-secondary/20 border-border/50 hover:bg-primary/10 hover:border-primary/30"
+                        className="rounded-2xl h-auto py-3.5 text-xs bg-secondary/10 border-border/50 hover:bg-primary/10 hover:border-primary/30 transition-all duration-300"
                         onClick={() => handleSendMessage(suggestion)}
                       >
                         {suggestion}

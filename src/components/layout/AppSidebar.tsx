@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from 'react';
-import { MessageSquare, Settings, Trash2, User, Sparkles, Plus } from "lucide-react";
+import { MessageSquare, Settings, Trash2, User, Plus } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ import {
 import { ChatSession, getSessions, deleteSession, createSession, clearAllSessions } from "@/lib/chat-store";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { BharatmaanLogo } from "@/components/brand/logo";
 
 interface AppSidebarProps {
   activeSessionId: string | null;
@@ -51,19 +52,17 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
   return (
     <Sidebar className="border-r border-border/50">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2 mb-6 px-2">
-          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
-          </div>
+        <div className="flex items-center gap-3 mb-6 px-1">
+          <BharatmaanLogo size={36} />
           <div>
-            <h1 className="text-lg font-bold leading-none text-foreground">Bharatmaan AI</h1>
-            <p className="text-[10px] text-primary font-bold tracking-widest uppercase">Your AI Friend</p>
+            <h1 className="text-lg font-bold leading-none text-foreground tracking-tight">Bharatmaan AI</h1>
+            <p className="text-[9px] text-primary font-bold tracking-[0.2em] uppercase mt-0.5">Your AI Friend</p>
           </div>
         </div>
         
         <Button 
           onClick={handleNewChat}
-          className="w-full justify-start gap-2 h-11 rounded-2xl bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 shadow-none"
+          className="w-full justify-start gap-2 h-11 rounded-2xl bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 shadow-none transition-all duration-300"
         >
           <Plus className="w-4 h-4" />
           New Conversation
@@ -72,12 +71,12 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
 
       <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-[10px] font-bold tracking-widest uppercase text-muted-foreground/60">Recent History</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-[10px] font-bold tracking-[0.15em] uppercase text-muted-foreground/50">Recent Dialogues</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {sessions.length === 0 ? (
-                <div className="px-4 py-8 text-center">
-                  <p className="text-sm text-muted-foreground">No conversations yet</p>
+                <div className="px-4 py-12 text-center">
+                  <p className="text-xs text-muted-foreground font-medium">Ready for a new start?</p>
                 </div>
               ) : (
                 sessions.map((session) => (
@@ -85,10 +84,10 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
                     <SidebarMenuButton 
                       isActive={activeSessionId === session.id}
                       onClick={() => onSessionSelect(session.id)}
-                      className="rounded-xl h-10 px-4 hover:bg-secondary/80 data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+                      className="rounded-xl h-10 px-4 hover:bg-secondary/80 data-[active=true]:bg-primary/10 data-[active=true]:text-primary transition-all"
                     >
                       <MessageSquare className="w-4 h-4 mr-2" />
-                      <span className="truncate">{session.title}</span>
+                      <span className="truncate font-medium">{session.title}</span>
                     </SidebarMenuButton>
                     <SidebarMenuAction 
                       onClick={(e) => handleDelete(e, session.id)}
@@ -108,13 +107,13 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
         <Separator className="bg-border/30 mb-2" />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="rounded-xl px-4 hover:bg-secondary/80">
+            <SidebarMenuButton className="rounded-xl px-4 hover:bg-secondary/80 font-medium">
               <User className="w-4 h-4 mr-2" />
-              Profile
+              Your Profile
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton className="rounded-xl px-4 hover:bg-secondary/80">
+            <SidebarMenuButton className="rounded-xl px-4 hover:bg-secondary/80 font-medium">
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </SidebarMenuButton>
@@ -122,17 +121,17 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
           <SidebarMenuItem>
             <SidebarMenuButton 
               onClick={handleClear}
-              className="rounded-xl px-4 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="rounded-xl px-4 text-destructive/80 hover:bg-destructive/10 hover:text-destructive font-medium"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Clear All Chats
+              Wipe All History
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
         
-        <div className="mt-4 p-3 rounded-2xl bg-secondary/30 border border-border/50">
-          <p className="text-[10px] text-muted-foreground mb-1 font-medium">DEVELOPER CREDIT</p>
-          <p className="text-xs font-bold text-foreground">Created by Krushna</p>
+        <div className="mt-4 p-4 rounded-2xl bg-secondary/20 border border-border/50 backdrop-blur-sm">
+          <p className="text-[9px] text-muted-foreground mb-1.5 font-bold tracking-widest uppercase opacity-70">Architecture By</p>
+          <p className="text-sm font-bold text-foreground tracking-tight italic">Krushna</p>
         </div>
       </SidebarFooter>
     </Sidebar>
