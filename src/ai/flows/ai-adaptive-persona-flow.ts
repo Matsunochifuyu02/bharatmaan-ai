@@ -1,8 +1,6 @@
 'use server';
 /**
  * @fileOverview This file implements an adaptive persona flow that uses the private server.
- * Since the private server might not support persona detection natively, it routes the message
- * and defaults to 'normal' persona unless the server response includes persona data.
  *
  * - adaptPersona - A function that handles the AI's persona adaptation and response generation.
  * - AiAdaptivePersonaInput - The input type for the adaptPersona function.
@@ -60,8 +58,6 @@ export async function adaptPersona(
 
     const data = await response.json();
     
-    // We expect the private server to return 'response' and optionally 'persona'.
-    // If 'persona' is not provided, we default to 'normal'.
     return {
       aiResponse: data.response || data.message || "Hello! I'm Bharatmaan.",
       detectedPersona: (data.persona as any) || 'normal',

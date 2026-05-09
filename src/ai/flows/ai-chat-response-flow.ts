@@ -37,7 +37,10 @@ export async function aiChatResponse(input: AiChatResponseInput): Promise<AiChat
       },
       body: JSON.stringify({
         message: input.message,
-        history: input.chatHistory,
+        history: input.chatHistory.map(h => ({
+          role: h.role === 'model' ? 'assistant' : h.role,
+          content: h.message
+        })),
       }),
     });
 

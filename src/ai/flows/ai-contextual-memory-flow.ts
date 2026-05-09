@@ -34,6 +34,12 @@ export async function getAiContextualReply(
   input: AiContextualMemoryInput
 ): Promise<AiContextualMemoryOutput> {
   try {
+    // Map 'model' to 'assistant' for broader compatibility with private LLM endpoints
+    const mappedHistory = input.history.map(h => ({
+      role: h.role === 'model' ? 'assistant' : h.role,
+      content: h.content
+    }));
+
     const response = await fetch(PRIVATE_SERVER_URL, {
       method: 'POST',
       headers: {
@@ -41,22 +47,22 @@ export async function getAiContextualReply(
       },
       body: JSON.stringify({
         message: input.message,
-        history: input.history,
+        history: mappedHistory,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Private server error: ${response.statusText}`);
+      throw new Error(`Private server returned status ${response.status}`);
     }
 
     const data = await response.json();
     return {
-      reply: data.response || data.message || data.reply || "I'm listening, but I had trouble processing that.",
+      reply: data.response || data.message || data.reply || "I'm processing your request, but the memory server returned an empty response.",
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Contextual memory flow error:', error);
     return {
-      reply: "I'm having trouble accessing my memory at the moment.",
+      reply: `I'm having trouble accessing my memory at the moment. (Error: ${error.message || 'Unknown Connection Issue'})`,
     };
   }
 }
