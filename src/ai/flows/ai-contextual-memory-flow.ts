@@ -1,15 +1,14 @@
 'use server';
 /**
- * @fileOverview This file implements a Genkit flow for maintaining contextual memory in AI conversations.
- * It pre-formats conversation history to avoid using prohibited logic helpers in Handlebars templates.
+ * @fileOverview This file implements a Genkit flow for maintaining contextual memory using a private server.
  *
  * - getAiContextualReply - A function that handles generating AI replies with conversational context.
  * - AiContextualMemoryInput - The input type for the getAiContextualReply function.
  * - AiContextualMemoryOutput - The return type for the getAiContextualReply function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 
 const AiContextualMemoryInputSchema = z.object({
   message: z.string().describe('The current message from the user.'),
@@ -29,53 +28,35 @@ const AiContextualMemoryOutputSchema = z.object({
 });
 export type AiContextualMemoryOutput = z.infer<typeof AiContextualMemoryOutputSchema>;
 
-const aiContextualMemoryPrompt = ai.definePrompt({
-  name: 'aiContextualMemoryPrompt',
-  input: {
-    schema: z.object({
-      message: z.string(),
-      formattedHistory: z.array(z.string()),
-    }),
-  },
-  output: {schema: AiContextualMemoryOutputSchema},
-  prompt: `You are Bharatmaan AI, a friendly, calm, helpful, smart but simple AI companion.
-You speak clear English, avoid slang, and give practical solutions.
-You remember our previous conversation to provide contextually relevant and consistent responses.
-
-Here is our conversation history:
-{{#if formattedHistory}}
-{{#each formattedHistory}}
-{{{this}}}
-{{/each}}
-{{/if}}
-
-User: {{{message}}}
-Bharatmaan AI:`,
-});
-
-const aiContextualMemoryFlow = ai.defineFlow(
-  {
-    name: 'aiContextualMemoryFlow',
-    inputSchema: AiContextualMemoryInputSchema,
-    outputSchema: AiContextualMemoryOutputSchema,
-  },
-  async (input) => {
-    // Pre-format the history to avoid logic in the Handlebars template
-    // This ensures no 'eq' helper is needed, preventing runtime errors.
-    const formattedHistory = input.history.map((h) => 
-      `${h.role === 'user' ? 'User' : 'Bharatmaan AI'}: ${h.content}`
-    );
-
-    const {output} = await aiContextualMemoryPrompt({
-      message: input.message,
-      formattedHistory,
-    });
-    return output!;
-  }
-);
+const PRIVATE_SERVER_URL = 'https://ef84d6f6-5ad3-47ea-8889-16507c6e1c80-00-2ulk7xi0bas6p.pike.replit.dev/chat';
 
 export async function getAiContextualReply(
   input: AiContextualMemoryInput
 ): Promise<AiContextualMemoryOutput> {
-  return aiContextualMemoryFlow(input);
+  try {
+    const response = await fetch(PRIVATE_SERVER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: input.message,
+        history: input.history,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Private server error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      reply: data.response || data.message || data.reply || "I'm listening, but I had trouble processing that.",
+    };
+  } catch (error) {
+    console.error('Contextual memory flow error:', error);
+    return {
+      reply: "I'm having trouble accessing my memory at the moment.",
+    };
+  }
 }

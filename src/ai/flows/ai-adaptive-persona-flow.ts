@@ -1,15 +1,16 @@
 'use server';
 /**
- * @fileOverview This file implements a Genkit flow for Bharatmaan AI's adaptive persona feature.
- * It allows the AI to subtly adapt its tone and content based on the user's expressed need or topic.
+ * @fileOverview This file implements an adaptive persona flow that uses the private server.
+ * Since the private server might not support persona detection natively, it routes the message
+ * and defaults to 'normal' persona unless the server response includes persona data.
  *
  * - adaptPersona - A function that handles the AI's persona adaptation and response generation.
  * - AiAdaptivePersonaInput - The input type for the adaptPersona function.
  * - AiAdaptivePersonaOutput - The return type for the adaptPersona function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 
 const AiAdaptivePersonaInputSchema = z.object({
   userMessage: z.string().describe('The current message from the user.'),
@@ -30,56 +31,46 @@ const AiAdaptivePersonaOutputSchema = z.object({
     .enum(['friendly', 'emotional_support', 'study_help', 'normal'])
     .optional()
     .describe(
-      "The persona detected for the AI's response based on user's need (e.g., 'emotional_support', 'study_help')."
+      "The persona detected for the AI's response based on user's need."
     ),
 });
 export type AiAdaptivePersonaOutput = z.infer<typeof AiAdaptivePersonaOutputSchema>;
 
-const adaptivePersonaPrompt = ai.definePrompt({
-  name: 'adaptivePersonaPrompt',
-  input: {schema: AiAdaptivePersonaInputSchema},
-  output: {schema: AiAdaptivePersonaOutputSchema},
-  prompt: `You are Bharatmaan AI, an empathetic, friendly, calm, and smart AI assistant. Your goal is to provide a helpful and supportive response, adjusting your tone and content based on the user's expressed needs. You avoid slang and speak clear English, offering practical solutions.
-
-Analyze the user's message and the provided conversation history to determine the most appropriate persona for your response. Choose one of the following personas:
-- 'friendly': For general conversation, light inquiries, and keeping a positive, approachable tone.
-- 'emotional_support': When the user expresses distress, asks for comfort, or seems to need a gentle and understanding approach.
-- 'study_help': When the user asks for academic assistance, explanations, or help with learning.
-- 'normal': A default, professional yet friendly tone when no specific need is strongly detected.
-
-After determining the persona, generate a response that aligns with this persona, providing assistance or comfort as needed.
-
-Conversation History (if available):
-{{#if chatHistory}}
-{{#each chatHistory}}
-- {{{this}}}
-{{/each}}
-{{else}}
-(No previous history)
-{{/if}}
-
-User Message: {{{userMessage}}}
-
-Please respond in JSON format, including both the 'aiResponse' and the 'detectedPersona'.`,
-});
-
-const aiAdaptivePersonaFlow = ai.defineFlow(
-  {
-    name: 'aiAdaptivePersonaFlow',
-    inputSchema: AiAdaptivePersonaInputSchema,
-    outputSchema: AiAdaptivePersonaOutputSchema,
-  },
-  async (input) => {
-    const {output} = await adaptivePersonaPrompt(input);
-    if (!output) {
-      throw new Error('Failed to get an adaptive persona response.');
-    }
-    return output;
-  }
-);
+const PRIVATE_SERVER_URL = 'https://ef84d6f6-5ad3-47ea-8889-16507c6e1c80-00-2ulk7xi0bas6p.pike.replit.dev/chat';
 
 export async function adaptPersona(
   input: AiAdaptivePersonaInput
 ): Promise<AiAdaptivePersonaOutput> {
-  return aiAdaptivePersonaFlow(input);
+  try {
+    const response = await fetch(PRIVATE_SERVER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: input.userMessage,
+        history: input.chatHistory,
+        task: 'adaptive_persona'
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Private server error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // We expect the private server to return 'response' and optionally 'persona'.
+    // If 'persona' is not provided, we default to 'normal'.
+    return {
+      aiResponse: data.response || data.message || "Hello! I'm Bharatmaan.",
+      detectedPersona: (data.persona as any) || 'normal',
+    };
+  } catch (error) {
+    console.error('Adaptive persona flow error:', error);
+    return {
+      aiResponse: "I'm here to help, even if my private server is acting up.",
+      detectedPersona: 'normal',
+    };
+  }
 }
