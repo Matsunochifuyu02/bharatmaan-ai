@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview This file implements the Genkit flow for handling AI chat responses.
- * It takes a user's message and chat history as input, and returns a contextually relevant AI response.
+ * It pre-formats history to ensure template stability.
  *
  * - aiChatResponse - The main function to call for getting an AI chat response.
  * - AiChatResponseInput - The input type for the aiChatResponse function.
@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zkit';
 
 const AiChatResponseInputSchema = z.object({
   message: z.string().describe('The current message from the user.'),
@@ -29,17 +29,19 @@ export type AiChatResponseOutput = z.infer<typeof AiChatResponseOutputSchema>;
 
 const aiChatResponsePrompt = ai.definePrompt({
   name: 'aiChatResponsePrompt',
-  input: { schema: AiChatResponseInputSchema },
+  input: { 
+    schema: z.object({
+      message: z.string(),
+      formattedHistory: z.array(z.string())
+    }) 
+  },
   output: { schema: AiChatResponseOutputSchema },
   system: `You are Bharatmaan AI, a smart, friendly, calm, and helpful AI assistant created by Krushna.
 Your purpose is to be a companion that provides practical solutions and clear, simple English. Avoid slang.
-Remember past conversations and user preferences to give contextually relevant responses.
-
-Here is the chat history to provide context for your response:
-`,
+Remember past conversations and user preferences to give contextually relevant responses.`,
   prompt: `
-{{#each chatHistory}}
-  {{this.role}}: {{this.message}}
+{{#each formattedHistory}}
+{{{this}}}
 {{/each}}
 User: {{{message}}}
 
@@ -53,7 +55,14 @@ const aiChatResponseFlow = ai.defineFlow(
     outputSchema: AiChatResponseOutputSchema,
   },
   async (input) => {
-    const { output } = await aiChatResponsePrompt(input);
+    const formattedHistory = input.chatHistory.map(h => 
+      `${h.role === 'user' ? 'User' : 'Bharatmaan AI'}: ${h.message}`
+    );
+
+    const { output } = await aiChatResponsePrompt({
+      message: input.message,
+      formattedHistory
+    });
     return output!;
   }
 );

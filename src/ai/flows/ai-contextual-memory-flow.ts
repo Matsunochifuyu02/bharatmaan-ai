@@ -1,6 +1,7 @@
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for maintaining contextual memory in AI conversations.
+ * It pre-formats conversation history to avoid using prohibited logic helpers in Handlebars templates.
  *
  * - getAiContextualReply - A function that handles generating AI replies with conversational context.
  * - AiContextualMemoryInput - The input type for the getAiContextualReply function.
@@ -27,12 +28,6 @@ const AiContextualMemoryOutputSchema = z.object({
   reply: z.string().describe("The AI's contextually relevant reply."),
 });
 export type AiContextualMemoryOutput = z.infer<typeof AiContextualMemoryOutputSchema>;
-
-export async function getAiContextualReply(
-  input: AiContextualMemoryInput
-): Promise<AiContextualMemoryOutput> {
-  return aiContextualMemoryFlow(input);
-}
 
 const aiContextualMemoryPrompt = ai.definePrompt({
   name: 'aiContextualMemoryPrompt',
@@ -66,7 +61,7 @@ const aiContextualMemoryFlow = ai.defineFlow(
   },
   async (input) => {
     // Pre-format the history to avoid logic in the Handlebars template
-    // This fixes the 'unknown helper eq' error by performing role logic in TS.
+    // This ensures no 'eq' helper is needed, preventing runtime errors.
     const formattedHistory = input.history.map((h) => 
       `${h.role === 'user' ? 'User' : 'Bharatmaan AI'}: ${h.content}`
     );
@@ -78,3 +73,9 @@ const aiContextualMemoryFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export async function getAiContextualReply(
+  input: AiContextualMemoryInput
+): Promise<AiContextualMemoryOutput> {
+  return aiContextualMemoryFlow(input);
+}
