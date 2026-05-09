@@ -3,6 +3,10 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
 import { firebaseConfig } from './config';
 
+/**
+ * Initializes Firebase services for the Bharatmaan AI application.
+ * This ensures we use the existing production project studio-3831187972-9aa69.
+ */
 export function initializeFirebase(): {
   firebaseApp: FirebaseApp;
   firestore: Firestore;
