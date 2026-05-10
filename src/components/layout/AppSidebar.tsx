@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from 'react';
@@ -16,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useUser, useFirestore, useCollection, useAuth } from '@/firebase';
+import { useUser, useFirestore, useCollection, useAuth, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -35,12 +34,16 @@ export function AppSidebar({ activeSessionId, onSessionSelect }: AppSidebarProps
   const auth = useAuth();
   const router = useRouter();
 
-  const sessionsQuery = user && db ? query(
-    collection(db, 'users', user.uid, 'sessions'),
-    orderBy('updatedAt', 'desc')
-  ) : null;
+  // Memoize the sessions query to prevent infinite re-renders
+  const sessionsQuery = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    return query(
+      collection(db, 'users', user.uid, 'sessions'),
+      orderBy('updatedAt', 'desc')
+    );
+  }, [db, user]);
 
-  const { data: sessions = [] } = useCollection(sessionsQuery as any);
+  const { data: sessions = [] } = useCollection(sessionsQuery);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();

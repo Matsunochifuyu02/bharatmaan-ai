@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useCollection } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, setDoc, query, orderBy, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -61,13 +61,16 @@ export default function BharatmaanChat() {
     }
   }, [user]);
 
-  // Fetch Messages for active session
-  const messagesQuery = activeSessionId && user && db ? query(
-    collection(db, 'users', user.uid, 'sessions', activeSessionId, 'messages'),
-    orderBy('timestamp', 'asc')
-  ) : null;
+  // Fetch Messages for active session with memoized query
+  const messagesQuery = useMemoFirebase(() => {
+    if (!activeSessionId || !user || !db) return null;
+    return query(
+      collection(db, 'users', user.uid, 'sessions', activeSessionId, 'messages'),
+      orderBy('timestamp', 'asc')
+    );
+  }, [db, user, activeSessionId]);
   
-  const { data: messages = [] } = useCollection(messagesQuery as any);
+  const { data: messages = [] } = useCollection(messagesQuery);
 
   useEffect(() => {
     if (scrollRef.current) {
